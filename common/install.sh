@@ -20,6 +20,20 @@ get_sha_gitlab() {
 		grep 'content_sha256:' |
 		cut -d":" -f2
 }
+get_bromite_sha() {
+	curl -kLs "https://github.com/bromite/bromite/releases/download/$1/brm_$1.sha256.txt" |
+		awk -v val="${ARCH}_SystemWebView.apk" '$2 == val {print $1}'
+}
+bromite() {
+	tag_name_bormite=$(get_version_github "bromite/bromite")
+	VW_APK_URL=https://github.com/bromite/bromite/releases/download/${tag_name_bormite}/${ARCH}_SystemWebView.apk
+	VW_TRICHROME_LIB_URL=""
+	VW_SHA=$(get_bromite_sha $tag_name_bormite)
+	VW_SYSTEM_PATH=system/app/BromiteWebview
+	VW_PACKAGE="org.bromite.webview"
+	VW_OVERLAY_PACKAGE="org.Bromite.WebviewOverlay"
+	OVERLAY_ZIP_FILE="bromite-overlay${OVERLAY_API}.zip"
+}
 mulch() {
 	VW_APK_URL=https://gitlab.com/divested-mobile/mulch/-/raw/master/prebuilt/${ARCH}/webview.apk
 	VW_TRICHROME_LIB_URL=""
@@ -168,30 +182,35 @@ fi
 
 ui_print "  Choose between:"
 if [[ $IS64BIT ]] && [[ $API -ge 29 ]]; then
-	ui_print "    Mulch, Vanadium"
+	ui_print "    Bromite, Mulch, Vanadium"
 else
-	ui_print "    Mulch"
+	ui_print "    Bromite, Mulch"
 fi
 sleep 3
 ui_print ""
-ui_print "  Select: [Vol+ = yes, Vol- = no]"
-ui_print "  -> Mulch"
+ui_print "  Select:"
+ui_print "  -> Bromite [Vol+ = yes, Vol- = no]"
 if chooseport 3; then
-	mulch
+	bromite
 else
-	if [[ $IS64BIT ]] && [[ $API -ge 29 ]]; then
-		ui_print "  -> Vanadium"
-		if chooseport 3; then
-			if [[ $ARCH = "arm64" ]]; then
-				vanadium "arm64"
+	ui_print "  -> Mulch [Vol+ = yes, Vol- = no]"
+	if chooseport 3; then
+		mulch
+	else
+		if [[ $IS64BIT ]] && [[ $API -ge 29 ]]; then
+			ui_print "  -> Vanadium [Vol+ = yes, Vol- = no]"
+			if chooseport 3; then
+				if [[ $ARCH = "arm64" ]]; then
+					vanadium "arm64"
+				else
+					vanadium "x86_64"
+				fi
 			else
-				vanadium "x86_64"
+				SKIP_INSTALLATION=1
 			fi
 		else
 			SKIP_INSTALLATION=1
 		fi
-	else
-		SKIP_INSTALLATION=1
 	fi
 fi
 

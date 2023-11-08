@@ -1,7 +1,7 @@
 id=open_webview
 name=Open Webview
-version=2.3.1
-versionCode=231
+version=2.3.1_Mod
+versionCode=232
 author=F3FFO
 description=Open Webview change your system webview
 minMagisk=20400
